@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using WebApiTZ.Models;
 
 namespace WebApiTZ.Controllers
@@ -9,13 +11,16 @@ namespace WebApiTZ.Controllers
 	[ApiController]
 	public class ProductController : ControllerBase
 	{
+		private readonly ILogger<ProductController> _logger;
 		public FilterModel Filter { get; set; }
 		public IEnumerable<ProductModel> Products { get; private set; }
 
 		private readonly ProductService _service;
-		public ProductController(ProductService service)
+		public ProductController(ProductService service, ILogger<ProductController> logger)
 		{
 			_service = service;
+			_logger = logger;
+			_logger.LogDebug(1, "NLog injected into HomeController");
 		}
 
 		[HttpGet("readFilter")]
@@ -31,6 +36,9 @@ namespace WebApiTZ.Controllers
 			{
 				return NotFound();
 			}
+
+			_logger.LogInformation(JsonSerializer.Serialize(Products));
+
 			return new JsonResult(Products);
 		}
 
@@ -43,6 +51,8 @@ namespace WebApiTZ.Controllers
 				return BadRequest(ModelState);
 			}
 			await _service.CreateProducts(Inputs);
+
+			_logger.LogInformation(JsonSerializer.Serialize(Inputs));
 
 			return Ok();
 
